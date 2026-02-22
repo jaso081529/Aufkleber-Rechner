@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HooDPlaka67 – Preiskalkulator</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Barlow+Condensed:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface2: #242424;
+    --border: #333;
+    --accent: #1e6ec8;
+    --accent2: #9b2335;
+    --accent3: #d4820a;
+    --text: #f0f0f0;
+    --muted: #888;
+    --success: #2ecc71;
+    --mono: 'Space Mono', monospace;
+    --display: 'Barlow Condensed', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--display); min-height: 100vh; padding: 2rem 1rem; }
+  .grain { position: fixed; inset: 0; pointer-events: none; z-index: 999; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E"); opacity: 0.3; }
+  header { max-width: 860px; margin: 0 auto 2.5rem; border-left: 4px solid var(--accent); padding-left: 1.2rem; }
+  header h1 { font-family: var(--display); font-size: 2.8rem; font-weight: 800; letter-spacing: 0.02em; line-height: 1; text-transform: uppercase; }
+  header h1 span { color: var(--accent); }
+  header p { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); margin-top: 0.4rem; letter-spacing: 0.08em; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 1.6rem; max-width: 860px; margin: 0 auto 1.5rem; }
+  .card h2 { font-family: var(--display); font-size: 1.1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin-bottom: 1.2rem; display: flex; align-items: center; gap: 0.6rem; }
+  .card h2::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+  @media (max-width: 600px) { .grid-3 { grid-template-columns: 1fr; } header h1 { font-size: 2rem; } }
+  .field label { display: block; font-family: var(--mono); font-size: 0.68rem; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.5rem; }
+  select, input[type="number"] { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); font-family: var(--display); font-size: 1rem; font-weight: 600; padding: 0.7rem 0.9rem; border-radius: 4px; outline: none; transition: border-color 0.2s; appearance: none; -webkit-appearance: none; }
+  select:focus, input[type="number"]:focus { border-color: var(--accent); }
+  select option { background: #1a1a1a; }
+  .toggle-group { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .toggle-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--muted); font-family: var(--display); font-size: 0.9rem; font-weight: 700; padding: 0.55rem 1rem; border-radius: 4px; cursor: pointer; transition: all 0.15s; letter-spacing: 0.05em; }
+  .toggle-btn:hover { border-color: #555; color: var(--text); }
+  .toggle-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .toggle-btn.mat.active { background: var(--accent3); border-color: var(--accent3); }
+  .divider { height: 1px; background: var(--border); margin: 1.2rem 0; }
+  .pack-table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 0.74rem; margin-top: 0.5rem; }
+  .pack-table th { text-align: left; color: var(--muted); font-weight: 400; padding: 0.4rem 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+  .pack-table td { padding: 0.5rem 0.7rem; border-bottom: 1px solid #222; text-align: center; }
+  .pack-table tr:last-child td { border-bottom: none; }
+  .pack-table tr.current-pack td, .pack-table tr.deine-menge td { background: #1a2a1a; color: var(--success); }
+  .pack-badge { display: inline-block; background: var(--surface2); border: 1px solid var(--border); border-radius: 3px; padding: 0.15rem 0.5rem; font-weight: 700; font-size: 0.8rem; min-width: 30px; text-align: center; }
+  .pack-table tr.current-pack .pack-badge, .pack-table tr.deine-menge .pack-badge { background: var(--success); border-color: var(--success); color: #000; }
+  .addon-row { display: flex; align-items: center; gap: 1rem; padding: 0.8rem 0; border-bottom: 1px solid var(--border); }
+  .addon-row:last-child { border-bottom: none; }
+  .addon-toggle { width: 40px; height: 23px; background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; position: relative; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
+  .addon-toggle.on { background: var(--accent2); border-color: var(--accent2); }
+  .addon-toggle::after { content: ''; position: absolute; width: 17px; height: 17px; background: #fff; border-radius: 50%; top: 2px; left: 2px; transition: left 0.2s; }
+  .addon-toggle.on::after { left: 19px; }
+  .addon-label { flex: 1; font-size: 0.95rem; font-weight: 600; }
+  .addon-sublabel { font-family: var(--mono); font-size: 0.65rem; color: var(--muted); margin-top: 0.1rem; }
+  .addon-price { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); text-align: right; min-width: 130px; }
+  .result-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; max-width: 860px; margin: 0 auto 1.5rem; overflow: hidden; }
+  .result-header { background: var(--accent); padding: 0.9rem 1.6rem; font-family: var(--display); font-size: 1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
+  .result-body { padding: 1.6rem; }
+  .price-main { font-family: var(--mono); font-size: 3.5rem; font-weight: 700; color: var(--success); line-height: 1; margin-bottom: 0.3rem; }
+  .price-unit { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); margin-bottom: 1.5rem; }
+  .breakdown { display: grid; gap: 0.5rem; }
+  .breakdown-row { display: flex; justify-content: space-between; align-items: center; padding: 0.55rem 0.8rem; background: var(--surface2); border-radius: 4px; font-size: 0.95rem; }
+  .breakdown-row .label { color: var(--muted); }
+  .breakdown-row .value { font-family: var(--mono); font-weight: 700; }
+  .breakdown-row.total { background: #1e3a2a; border: 1px solid #2ecc7133; }
+  .breakdown-row.total .value { color: var(--success); font-size: 1.1rem; }
+  .interpolation-note { margin-top: 1rem; padding: 0.7rem 1rem; background: #1a1a2e; border-left: 3px solid var(--accent); border-radius: 0 4px 4px 0; font-family: var(--mono); font-size: 0.68rem; color: var(--muted); line-height: 1.7; }
+  .empty-state { padding: 3rem; text-align: center; color: var(--muted); font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.08em; }
+</style>
+</head>
+<body>
+<div class="grain"></div>
+
+<header>
+  <h1>HooDPlaka<span>67</span></h1>
+  <p>// STICKER PREISKALKULATOR // AUFKLEBER-PACKS + A4/A3 DRUCKEBEDARF //</p>
+</header>
+
+<div class="card">
+  <h2>Format &amp; Menge</h2>
+  <div class="grid-3">
+    <div class="field">
+      <label>Format</label>
+      <select id="format">
+        <option value="A4">A4</option>
+        <option value="A5">A5</option>
+        <option value="A7">A7</option>
+        <option value="9.5x9.5">9,5 × 9,5 cm</option>
+        <option value="6.5x6.5">6,5 × 6,5 cm</option>
+        <option value="20x5">20 × 5 cm</option>
+        <option value="7x5">7 × 5 cm</option>
+        <option value="10x3">10 × 3 cm</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Aufkleber Pack</label>
+      <select id="pack-select">
+        <option value="custom">Eigene Menge</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Anzahl (Stück)</label>
+      <input type="number" id="qty" min="1" value="100" placeholder="z.B. 100">
+    </div>
+  </div>
+  <div class="field" style="margin-top:1.2rem;">
+    <label>Material</label>
+    <div class="toggle-group" id="material-btns">
+      <button class="toggle-btn mat active" data-mat="Glänzend">Glänzend</button>
+      <button class="toggle-btn mat" data-mat="Transparent">Transparent</button>
+      <button class="toggle-btn mat" data-mat="Holographic">Holographic</button>
+      <button class="toggle-btn mat" data-mat="Weiß Matt">Weiß Matt</button>
+    </div>
+  </div>
+  <div class="divider"></div>
+  <div style="font-family:var(--mono);font-size:0.68rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.6rem;">Packgrößen &amp; Tabellenpreise + Druckbedarf</div>
+  <table class="pack-table">
+    <thead>
+      <tr>
+        <th>Pack</th>
+        <th>Blätter</th>
+        <th>Stück</th>
+        <th>Tabellenpreis</th>
+        <th>∅ / Stück</th>
+        <th>A4 Blätter</th>
+        <th>A3 Blätter</th>
+      </tr>
+    </thead>
+    <tbody id="pack-tbody"></tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h2>Extras · HP67 Aufpreise</h2>
+  <div class="addon-row">
+    <div class="addon-toggle" id="laminat-toggle" onclick="toggleAddon('laminat')"></div>
+    <div>
+      <div class="addon-label">Laminat</div>
+      <div class="addon-sublabel">UV-/wasserfest · Kaltlaminat</div>
+    </div>
+    <div class="addon-price" id="laminat-price">—</div>
+  </div>
+  <div class="addon-row">
+    <div class="addon-toggle" id="schnitt-toggle" onclick="toggleAddon('schnitt')"></div>
+    <div>
+      <div class="addon-label">Extra Schnitt</div>
+      <div class="addon-sublabel">Zuschnitt / Schneiden als Service</div>
+    </div>
+    <div class="addon-price" id="schnitt-price">—</div>
+  </div>
+</div>
+
+<div class="result-card">
+  <div class="result-header">💰 Preisberechnung</div>
+  <div class="result-body" id="result-body">
+    <div class="empty-state">Bitte Anzahl eingeben...</div>
+  </div>
+</div>
+
+<script>
+// ── DEINE PREISE ─────────────────────
+const DATA = { /* ... deine Preise ... */ 
+  A4: { qty:[1,2,5,10,20], mat:{ "Glänzend":[1.90,3.70,9.30,18.50,29.60], "Transparent":[2.00,4.00,10.00,20.00,32.00], "Holographic":[3.70,7.40,18.40,32.70,50.80], "Weiß Matt":[2.00,4.00,9.90,19.80,31.80] } },
+  A5: { qty:[2,4,10,20,40], mat:{ "Glänzend":[2.10,4.20,10.50,16.80,30.40], "Transparent":[2.40,4.80,12.00,19.20,35.60], "Holographic":[4.20,8.40,19.80,30.40,54.40], "Weiß Matt":[2.30,4.50,11.20,18.00,32.70] } },
+  A7: { qty:[8,16,40,80], mat:{ "Glänzend":[1.70,2.70,6.30,9.80], "Transparent":[2.90,4.70,10.70,15.80], "Holographic":[3.30,5.20,12.40,19.40], "Weiß Matt":[1.80,2.90,6.70,10.50] } },
+  "9.5x9.5": { qty:[6,12,30,60,100], mat:{ "Glänzend":[1.60,2.50,5.80,9.10,13.50], "Transparent":[2.50,4.00,9.20,13.60,20.18], "Holographic":[3.10,5.00,11.40,18.00,26.70], "Weiß Matt":[1.70,2.70,6.20,9.80,14.54] } },
+  "6.5x6.5": { qty:[12,24,60,120], mat:{ "Glänzend":[1.70,3.40,5.40,10.80], "Transparent":[2.30,4.60,7.30,14.60], "Holographic":[3.40,6.70,10.70,21.40], "Weiß Matt":[1.80,3.60,5.80,11.60] } },
+  "20x5": { qty:[5,10,25,50], mat:{ "Glänzend":[1.60,3.20,6.40,11.80], "Transparent":[2.40,4.70,9.40,17.40], "Holographic":[3.20,6.30,12.70,23.40], "Weiß Matt":[1.70,3.40,6.80,12.60] } },
+  "7x5": { qty:[15,30,75,150], mat:{ "Glänzend":[1.70,2.80,5.70,13.40], "Transparent":[3.80,6.90,12.80,27.60], "Holographic":[3.20,5.50,11.40,24.70], "Weiß Matt":[1.80,3.00,6.10,14.20] } },
+  "10x3": { qty:[18,36,90,180], mat:{ "Glänzend":[1.80,3.10,6.40,14.70], "Transparent":[4.40,8.00,14.90,31.70], "Holographic":[3.60,6.00,12.60,27.10], "Weiß Matt":[1.90,3.30,6.80,15.50] } }
+};
+
+const STICKERS_PER_A3 = { "A4":2, "A5":4, "A7":16, "9.5x9.5":12, "6.5x6.5":24, "20x5":10, "7x5":30, "10x3":36 };
+
+const LAMINAT = { S:2.50, M:3.50, L:4.50, XL:6.50 };
+const SCHNITT  = { S:2.00, M:2.50, L:3.50, XL:5.00 };
+const PACK_LABELS = { S:'S (1 Blatt)', M:'M (2 Blätter)', L:'L (5 Blätter)', XL:'XL (10 Blätter)' };
+const FORMAT_NAMES = { A4:"A4", A5:"A5", A7:"A7", "9.5x9.5":"9,5 × 9,5 cm", "6.5x6.5":"6,5 × 6,5 cm", "20x5":"20 × 5 cm", "7x5":"7 × 5 cm", "10x3":"10 × 3 cm" };
+
+let selectedMat = "Glänzend";
+let addons = { laminat: false, schnitt: false };
+
+function fmt(v) { return v.toFixed(2).replace('.', ',') + ' €'; }
+
+function calcPrice(format, mat, qty) {
+  const d = DATA[format];
+  const qs = d.qty;
+  const ps = d.mat[mat];
+  const n = qs.length;
+  if (qty <= 0) return null;
+
+  const ei = qs.indexOf(qty);
+  if (ei !== -1) return { price: ps[ei], ref: `Exakter Tabellenwert: ${fmt(ps[ei])}` };
+
+  if (qty < qs[0]) {
+    const slope = (ps[1] - ps[0]) / (qs[1] - qs[0]);
+    const price = Math.max(ps[0] + slope * (qty - qs[0]), 0.01);
+    return { price, ref: `Extrapoliert unterhalb Pack S (${qs[0]} Stk.)` };
+  }
+
+  if (qty > qs[n-1]) {
+    const slope = (ps[n-1] - ps[n-2]) / (qs[n-1] - qs[n-2]);
+    const price = Math.max(ps[n-1] + slope * (qty - qs[n-1]), ps[n-1] * 0.75);
+    return { price, ref: `Extrapoliert über ${qs[n-1]} Stk. (prozentuale Degression)` };
+  }
+
+  for (let i = 0; i < n-1; i++) {
+    if (qty > qs[i] && qty < qs[i+1]) {
+      const t = (qty - qs[i]) / (qs[i+1] - qs[i]);
+      const price = ps[i] + t * (ps[i+1] - ps[i]);
+      return { price, ref: `Interpoliert: ${qs[i]} Stk. = ${fmt(ps[i])} → ${qs[i+1]} Stk. = ${fmt(ps[i+1])}` };
+    }
+  }
+  return null;
+}
+
+function getAddonPack(qty) {
+  if (qty <= 20) return 'S';
+  if (qty <= 50) return 'M';
+  if (qty <= 100) return 'L';
+  return 'XL';
+}
+
+function getSchnittPack(format, qty) {
+  if (format === "9.5x9.5") {
+    if (qty <= 6) return 'S';
+    if (qty <= 12) return 'M';
+    if (qty <= 30) return 'L';
+    return 'XL';   // ab 60 Stück immer XL
+  }
+  if (qty <= 20) return 'S';
+  if (qty <= 50) return 'M';
+  if (qty <= 100) return 'L';
+  return 'XL';
+}
+
+function populatePackSelect() {
+  const format = document.getElementById('format').value;
+  const select = document.getElementById('pack-select');
+  const qs = DATA[format].qty;
+  select.innerHTML = '<option value="custom">Eigene Menge</option>';
+  qs.forEach(q => {
+    const option = document.createElement('option');
+    option.value = q;
+    option.textContent = q + 'er Pack';
+    select.appendChild(option);
+  });
+}
+
+function updatePackTable() {
+  const format = document.getElementById('format').value;
+  const qty = parseInt(document.getElementById('qty').value) || 0;
+  const d = DATA[format];
+  const qs = d.qty;
+  const ps = d.mat[selectedMat];
+  const perA4 = qs[0];
+  const perA3 = STICKERS_PER_A3[format];
+
+  let html = '';
+  const packNames = ['S','M','L','XL'];
+  const sheetLabels = ['1 Blatt','2 Blätter','5 Blätter','10 Blätter'];
+  for (let i = 0; i < 4; i++) {
+    const qv = qs[i];
+    const pv = ps[i];
+    const up = pv / qv;
+    const a4 = Math.ceil(qv / perA4);
+    const a3 = Math.ceil(qv / perA3);
+    html += `<tr><td><span class="pack-badge">${packNames[i]}</span></td><td>${sheetLabels[i]}</td><td>${qv}</td><td>${fmt(pv)}</td><td>${up.toFixed(4).replace('.',',')}</td><td>${a4}</td><td>${a3}</td></tr>`;
+  }
+  if (qty > 0) {
+    const result = calcPrice(format, selectedMat, qty);
+    const basePrice = result.price;
+    const up = basePrice / qty;
+    const a4 = Math.ceil(qty / perA4);
+    const a3 = Math.ceil(qty / perA3);
+    html += `<tr class="deine-menge">
+      <td><span class="pack-badge">JETZT</span></td>
+      <td>Deine Menge</td>
+      <td>${qty}</td>
+      <td>${fmt(basePrice)}</td>
+      <td>${up.toFixed(4).replace('.',',')}</td>
+      <td>${a4}</td>
+      <td>${a3}</td>
+    </tr>`;
+  }
+  document.getElementById('pack-tbody').innerHTML = html;
+}
+
+function calculate() {
+  const format = document.getElementById('format').value;
+  const qty = parseInt(document.getElementById('qty').value) || 0;
+  const body = document.getElementById('result-body');
+
+  updatePackTable();
+
+  if (qty < 1) {
+    body.innerHTML = '<div class="empty-state">Bitte Anzahl eingeben...</div>';
+    document.getElementById('laminat-price').textContent = '—';
+    document.getElementById('schnitt-price').textContent = '—';
+    return;
+  }
+
+  const result = calcPrice(format, selectedMat, qty);
+  const schnittPack = getSchnittPack(format, qty);
+  const pack = getAddonPack(qty);
+
+  const lamPrice = LAMINAT[pack];
+  const schPrice = SCHNITT[schnittPack];
+  const laminatCost = addons.laminat ? lamPrice : 0;
+  const schnittCost = addons.schnitt ? schPrice : 0;
+  const basePrice = result.price;
+  const total = basePrice + laminatCost + schnittCost;
+  const unitPrice = basePrice / qty;
+
+  document.getElementById('laminat-price').textContent = addons.laminat ? `+${fmt(lamPrice)} · ${PACK_LABELS[pack]}` : '—';
+  document.getElementById('schnitt-price').textContent  = addons.schnitt ? `+${fmt(schPrice)} · ${PACK_LABELS[schnittPack]}` : '—';
+
+  let bd = `<div class="breakdown-row"><span class="label">${qty} × ${FORMAT_NAMES[format]} – ${selectedMat}</span><span class="value">${fmt(basePrice)}</span></div>`;
+  if (laminatCost > 0) bd += `<div class="breakdown-row"><span class="label">+ Laminat (${PACK_LABELS[pack]})</span><span class="value">+ ${fmt(laminatCost)}</span></div>`;
+  if (schnittCost > 0) bd += `<div class="breakdown-row"><span class="label">+ Extra Schnitt (${PACK_LABELS[schnittPack]})</span><span class="value">+ ${fmt(schnittCost)}</span></div>`;
+  bd += `<div class="breakdown-row total"><span class="label">GESAMT</span><span class="value">${fmt(total)}</span></div>`;
+
+  body.innerHTML = `
+    <div class="price-main">${fmt(total)}</div>
+    <div class="price-unit">∅ ${unitPrice.toFixed(4).replace('.', ',')} € pro Stück</div>
+    <div class="breakdown">${bd}</div>
+    <div class="interpolation-note">ℹ ${result.ref}</div>`;
+}
+
+function toggleAddon(type) {
+  addons[type] = !addons[type];
+  document.getElementById(type+'-toggle').classList.toggle('on', addons[type]);
+  calculate();
+}
+
+document.getElementById('format').addEventListener('change', () => {
+  populatePackSelect();
+  calculate();
+});
+
+document.getElementById('pack-select').addEventListener('change', function() {
+  if (this.value !== 'custom') {
+    document.getElementById('qty').value = this.value;
+  }
+  calculate();
+});
+
+function populatePackSelect() {
+  const format = document.getElementById('format').value;
+  const select = document.getElementById('pack-select');
+  const qs = DATA[format].qty;
+  select.innerHTML = '<option value="custom">Eigene Menge</option>';
+  qs.forEach(q => {
+    const option = document.createElement('option');
+    option.value = q;
+    option.textContent = q + 'er Pack';
+    select.appendChild(option);
+  });
+}
+
+document.getElementById('material-btns').addEventListener('click', e => {
+  const btn = e.target.closest('[data-mat]');
+  if (!btn) return;
+  document.querySelectorAll('.toggle-btn.mat').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  selectedMat = btn.dataset.mat;
+  calculate();
+});
+
+document.getElementById('qty').addEventListener('input', calculate);
+
+populatePackSelect();
+calculate();
+</script>
+</body>
+</html>
