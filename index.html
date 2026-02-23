@@ -78,7 +78,7 @@
 
 <header>
   <h1>HooDPlaka<span>67</span></h1>
-  <p>// STICKER PREISKALKULATOR // AUFKLEBER-PACKS + A4/A3 DRUCKEBEDARF //</p>
+  <p>// STICKER PREISKALKULATOR // EXAKTE SCHNITT-REGEL FÜR ALLE FORMATE //</p>
 </header>
 
 <div class="card">
@@ -164,15 +164,15 @@
 
 <script>
 // ── DEINE PREISE ─────────────────────
-const DATA = { /* ... deine Preise ... */ 
-  A4: { qty:[1,2,5,10,20], mat:{ "Glänzend":[1.90,3.70,9.30,18.50,29.60], "Transparent":[2.00,4.00,10.00,20.00,32.00], "Holographic":[3.70,7.40,18.40,32.70,50.80], "Weiß Matt":[2.00,4.00,9.90,19.80,31.80] } },
-  A5: { qty:[2,4,10,20,40], mat:{ "Glänzend":[2.10,4.20,10.50,16.80,30.40], "Transparent":[2.40,4.80,12.00,19.20,35.60], "Holographic":[4.20,8.40,19.80,30.40,54.40], "Weiß Matt":[2.30,4.50,11.20,18.00,32.70] } },
-  A7: { qty:[8,16,40,80], mat:{ "Glänzend":[1.70,2.70,6.30,9.80], "Transparent":[2.90,4.70,10.70,15.80], "Holographic":[3.30,5.20,12.40,19.40], "Weiß Matt":[1.80,2.90,6.70,10.50] } },
+const DATA = {
+  A4:        { qty:[1,2,5,10,20],    mat:{ "Glänzend":[1.90,3.70,9.30,18.50,29.60], "Transparent":[2.00,4.00,10.00,20.00,32.00], "Holographic":[3.70,7.40,18.40,32.70,50.80], "Weiß Matt":[2.00,4.00,9.90,19.80,31.80] } },
+  A5:        { qty:[2,4,10,20,40],   mat:{ "Glänzend":[2.10,4.20,10.50,16.80,30.40], "Transparent":[2.40,4.80,12.00,19.20,35.60], "Holographic":[4.20,8.40,19.80,30.40,54.40], "Weiß Matt":[2.30,4.50,11.20,18.00,32.70] } },
+  A7:        { qty:[8,16,40,80],     mat:{ "Glänzend":[1.70,2.70,6.30,9.80], "Transparent":[2.90,4.70,10.70,15.80], "Holographic":[3.30,5.20,12.40,19.40], "Weiß Matt":[1.80,2.90,6.70,10.50] } },
   "9.5x9.5": { qty:[6,12,30,60,100], mat:{ "Glänzend":[1.60,2.50,5.80,9.10,13.50], "Transparent":[2.50,4.00,9.20,13.60,20.18], "Holographic":[3.10,5.00,11.40,18.00,26.70], "Weiß Matt":[1.70,2.70,6.20,9.80,14.54] } },
-  "6.5x6.5": { qty:[12,24,60,120], mat:{ "Glänzend":[1.70,3.40,5.40,10.80], "Transparent":[2.30,4.60,7.30,14.60], "Holographic":[3.40,6.70,10.70,21.40], "Weiß Matt":[1.80,3.60,5.80,11.60] } },
-  "20x5": { qty:[5,10,25,50], mat:{ "Glänzend":[1.60,3.20,6.40,11.80], "Transparent":[2.40,4.70,9.40,17.40], "Holographic":[3.20,6.30,12.70,23.40], "Weiß Matt":[1.70,3.40,6.80,12.60] } },
-  "7x5": { qty:[15,30,75,150], mat:{ "Glänzend":[1.70,2.80,5.70,13.40], "Transparent":[3.80,6.90,12.80,27.60], "Holographic":[3.20,5.50,11.40,24.70], "Weiß Matt":[1.80,3.00,6.10,14.20] } },
-  "10x3": { qty:[18,36,90,180], mat:{ "Glänzend":[1.80,3.10,6.40,14.70], "Transparent":[4.40,8.00,14.90,31.70], "Holographic":[3.60,6.00,12.60,27.10], "Weiß Matt":[1.90,3.30,6.80,15.50] } }
+  "6.5x6.5": { qty:[12,24,60,120],   mat:{ "Glänzend":[1.70,3.40,5.40,10.80], "Transparent":[2.30,4.60,7.30,14.60], "Holographic":[3.40,6.70,10.70,21.40], "Weiß Matt":[1.80,3.60,5.80,11.60] } },
+  "20x5":    { qty:[5,10,25,50],     mat:{ "Glänzend":[1.60,3.20,6.40,11.80], "Transparent":[2.40,4.70,9.40,17.40], "Holographic":[3.20,6.30,12.70,23.40], "Weiß Matt":[1.70,3.40,6.80,12.60] } },
+  "7x5":     { qty:[15,30,75,150],   mat:{ "Glänzend":[1.70,2.80,5.70,13.40], "Transparent":[3.80,6.90,12.80,27.60], "Holographic":[3.20,5.50,11.40,24.70], "Weiß Matt":[1.80,3.00,6.10,14.20] } },
+  "10x3":    { qty:[18,36,90,180],   mat:{ "Glänzend":[1.80,3.10,6.40,14.70], "Transparent":[4.40,8.00,14.90,31.70], "Holographic":[3.60,6.00,12.60,27.10], "Weiß Matt":[1.90,3.30,6.80,15.50] } }
 };
 
 const STICKERS_PER_A3 = { "A4":2, "A5":4, "A7":16, "9.5x9.5":12, "6.5x6.5":24, "20x5":10, "7x5":30, "10x3":36 };
@@ -217,26 +217,6 @@ function calcPrice(format, mat, qty) {
     }
   }
   return null;
-}
-
-function getAddonPack(qty) {
-  if (qty <= 20) return 'S';
-  if (qty <= 50) return 'M';
-  if (qty <= 100) return 'L';
-  return 'XL';
-}
-
-function getSchnittPack(format, qty) {
-  if (format === "9.5x9.5") {
-    if (qty <= 6) return 'S';
-    if (qty <= 12) return 'M';
-    if (qty <= 30) return 'L';
-    return 'XL';   // ab 60 Stück immer XL
-  }
-  if (qty <= 20) return 'S';
-  if (qty <= 50) return 'M';
-  if (qty <= 100) return 'L';
-  return 'XL';
 }
 
 function populatePackSelect() {
@@ -336,6 +316,44 @@ function toggleAddon(type) {
   addons[type] = !addons[type];
   document.getElementById(type+'-toggle').classList.toggle('on', addons[type]);
   calculate();
+}
+
+function getAddonPack(qty) {
+  if (qty <= 20) return 'S';
+  if (qty <= 50) return 'M';
+  if (qty <= 100) return 'L';
+  return 'XL';
+}
+
+function getSchnittPack(format, qty) {
+  if (format === "20x5") {
+    if (qty <= 10) return 'M';   // ← 10er Pack = M (wie du es jetzt willst)
+    if (qty <= 25) return 'L';
+    return 'XL';
+  }
+  if (format === "9.5x9.5") {
+    if (qty <= 6) return 'S';
+    if (qty <= 12) return 'M';
+    if (qty <= 30) return 'L';
+    return 'XL';
+  }
+  if (format === "A5") {
+    if (qty <= 10) return 'S';
+    if (qty <= 20) return 'M';
+    if (qty <= 40) return 'L';
+    return 'XL';
+  }
+  if (format === "A7") {
+    if (qty <= 8) return 'S';
+    if (qty <= 16) return 'M';
+    if (qty <= 40) return 'L';
+    return 'XL';
+  }
+  // Alle anderen Formate
+  if (qty <= 20) return 'S';
+  if (qty <= 50) return 'M';
+  if (qty <= 100) return 'L';
+  return 'XL';
 }
 
 document.getElementById('format').addEventListener('change', () => {
