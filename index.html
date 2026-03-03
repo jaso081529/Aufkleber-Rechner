@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>HooDPlaka67 – Preiskalkulator</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Barlow+Condensed:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root {
     --bg: #0a0a0a;
@@ -26,44 +28,38 @@
   header h1 { font-size: clamp(2.2rem, 5vw, 3.2rem); font-weight: 800; letter-spacing: -0.02em; }
   header h1 span { color: var(--accent); }
   header p { font-family: var(--mono); font-size: 0.78rem; color: var(--muted); margin-top: 0.6rem; letter-spacing: 0.1em; }
-
   .card { background: var(--surface); border: 1px solid #333; border-radius: 16px; padding: 2rem; max-width: 920px; margin: 0 auto 2rem; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
   .card h2 { font-size: 1.15rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin-bottom: 1.6rem; display: flex; align-items: center; gap: 0.8rem; }
   .card h2::after { content: ''; flex: 1; height: 1px; background: linear-gradient(to right, #333, transparent); }
-
   .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
   .field label { display: block; font-family: var(--mono); font-size: 0.72rem; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.6rem; }
   select, input[type="number"] { width: 100%; background: var(--surface2); border: 1px solid #444; color: var(--text); font-family: var(--display); font-size: 1.05rem; font-weight: 600; padding: 1rem 1.2rem; border-radius: 10px; transition: all 0.2s; }
   select:focus, input[type="number"]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,212,255,0.15); }
-
   .toggle-group { display: flex; flex-wrap: wrap; gap: 0.8rem; }
   .toggle-btn { background: var(--surface2); border: 1px solid #444; color: var(--muted); font-weight: 700; padding: 0.85rem 1.4rem; border-radius: 10px; cursor: pointer; transition: all 0.2s; font-size: 1rem; }
   .toggle-btn:hover { border-color: var(--accent); color: white; }
   .toggle-btn.active { background: var(--accent); border-color: var(--accent); color: #000; box-shadow: 0 0 15px rgba(0,212,255,0.3); }
-
   .pack-table-wrapper { overflow-x: auto; border-radius: 12px; border: 1px solid #333; }
   .pack-table { width: 100%; min-width: 720px; border-collapse: collapse; font-family: var(--mono); font-size: 0.78rem; }
   .pack-table th { background: #111; padding: 0.9rem 0.8rem; text-align: left; font-weight: 400; color: var(--muted); letter-spacing: 0.08em; }
   .pack-table td { padding: 0.95rem 0.8rem; border-top: 1px solid #222; text-align: center; }
   .pack-table tr.deine-menge { background: #1a2a1a !important; font-weight: 700; }
-
   .addon-row { display: flex; align-items: center; gap: 1.2rem; padding: 1rem 0; border-top: 1px solid #222; }
   .addon-toggle { width: 52px; height: 28px; background: #333; border-radius: 20px; position: relative; cursor: pointer; transition: 0.3s; }
   .addon-toggle.on { background: var(--accent2); }
   .addon-toggle::after { content: ''; position: absolute; width: 22px; height: 22px; background: white; border-radius: 50%; top: 3px; left: 3px; transition: 0.3s; }
   .addon-toggle.on::after { left: 27px; }
-
   .result-card { background: var(--surface); border-radius: 16px; overflow: hidden; box-shadow: 0 15px 50px rgba(0,0,0,0.6); }
   .result-header { background: linear-gradient(90deg, var(--accent), #00ff9d); padding: 1.2rem 2rem; font-size: 1.15rem; font-weight: 700; text-align: center; color: #000; }
   .result-body { padding: 2rem; }
   .price-main { font-family: var(--mono); font-size: clamp(3.2rem, 8vw, 4.8rem); font-weight: 700; color: var(--success); line-height: 1; margin: 0.4rem 0; }
   .price-unit { font-size: 1rem; color: var(--muted); margin-bottom: 2rem; }
-
   .breakdown-row { display: flex; justify-content: space-between; padding: 1rem 1.4rem; background: var(--surface2); border-radius: 10px; margin-bottom: 0.8rem; align-items: center; }
   .breakdown-row.total { background: #112211; border: 2px solid var(--success); font-size: 1.15rem; font-weight: 700; }
-
-  .interpolation-note { margin-top: 1.5rem; padding: 1rem 1.4rem; background: #1a1a2e; border-left: 5px solid var(--accent); border-radius: 8px; font-family: var(--mono); font-size: 0.8rem; color: var(--muted); }
   .empty-state { padding: 5rem 2rem; text-align: center; color: var(--muted); font-size: 1rem; }
+  .export-buttons { display: flex; gap: 1rem; justify-content: center; margin-top: 2rem; flex-wrap: wrap; }
+  .export-btn { background: #222; border: 1px solid #555; color: white; padding: 1rem 2rem; border-radius: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; font-size: 1rem; }
+  .export-btn:hover { background: var(--accent); border-color: var(--accent); color: #000; transform: scale(1.03); }
 </style>
 </head>
 <body>
@@ -71,7 +67,7 @@
 
 <header>
   <h1>HooDPlaka<span>67</span></h1>
-  <p>STICKER PREISKALKULATOR • FORMAT-SPEZIFISCHER SCHNITTAUFWAND</p>
+  <p>STICKER PREISKALKULATOR • WEIßE ANGEBOTS-VORLAGE FÜR KUNDEN</p>
 </header>
 
 <div class="card">
@@ -157,23 +153,52 @@
   <div class="result-body" id="result-body">
     <div class="empty-state">Wunschmenge eingeben → sofortiges Angebot</div>
   </div>
+
+  <!-- EXPORT BUTTONS -->
+  <div class="export-buttons" id="export-buttons" style="display:none; padding:1.5rem; background:#111;">
+    <button class="export-btn" onclick="downloadPNG()">📸 Als PNG herunterladen</button>
+    <button class="export-btn" onclick="downloadPDF()">📄 Als PDF herunterladen</button>
+  </div>
+</div>
+
+<!-- WEIßE ANGEBOTS-VORLAGE -->
+<div id="white-offer" style="display:none; background:white; color:#000; padding:40px; max-width:800px; margin:40px auto; border:1px solid #ddd; font-family:Arial, sans-serif; line-height:1.6;">
+  <h1 style="text-align:center; font-size:28px; margin-bottom:10px;">HooDPlaka67</h1>
+  <p style="text-align:center; font-size:14px; color:#666; margin-bottom:30px;">Angebot • <span id="offer-date"></span></p>
+  
+  <p><strong>Format:</strong> <span id="offer-format"></span></p>
+  <p><strong>Material:</strong> <span id="offer-material"></span></p>
+  <p><strong>Wunschmenge:</strong> <span id="offer-wunsch"></span> Stück</p>
+  <p><strong>Abgerechnete Menge:</strong> <span id="offer-bill"></span> Stück</p>
+  <p><strong>Pack-Kombination:</strong> <span id="offer-breakdown"></span></p>
+  
+  <hr style="margin:20px 0;">
+  
+  <p><strong>Grundpreis:</strong> <span id="offer-grund"></span></p>
+  <p><strong>+ Laminat:</strong> <span id="offer-lam"></span></p>
+  <p><strong>+ Extra Schnitt:</strong> <span id="offer-schnitt"></span></p>
+  
+  <hr style="margin:20px 0;">
+  
+  <h2 style="text-align:center; font-size:32px; color:#00d4ff; margin:20px 0;">GESAMT: <span id="offer-total"></span></h2>
+  
+  <p style="text-align:center; font-size:12px; color:#666; margin-top:40px;">Vielen Dank für Ihr Vertrauen!<br>HooDPlaka67 • Deine Aufkleber-Experten</p>
 </div>
 
 <script>
-// ── FORMAT-SPEZIFISCHE PREISE PRO STÜCK (hier kannst du alles ändern) ─────────────────────
+// ── FORMAT-SPEZIFISCHE PREISE PRO STÜCK ─────────────────────
 const PER_STICKER = {
-  "A4":        { lam: 0.06, schnitt: 0.03 },
-  "A5":        { lam: 0.07, schnitt: 0.035 },
-  "A7":        { lam: 0.09, schnitt: 0.05 },
-  "9.5x9.5":   { lam: 0.08, schnitt: 0.04 },
-  "6.5x6.5":   { lam: 0.095, schnitt: 0.055 },
-  "20x5":      { lam: 0.075, schnitt: 0.04 },
-  "7x5":       { lam: 0.10, schnitt: 0.06 },
-  "10x3":      { lam: 0.105, schnitt: 0.065 }
+  "A4": { lam: 0.06, schnitt: 0.03 },
+  "A5": { lam: 0.07, schnitt: 0.035 },
+  "A7": { lam: 0.09, schnitt: 0.05 },
+  "9.5x9.5": { lam: 0.08, schnitt: 0.04 },
+  "6.5x6.5": { lam: 0.095, schnitt: 0.055 },
+  "20x5": { lam: 0.075, schnitt: 0.04 },
+  "7x5": { lam: 0.10, schnitt: 0.06 },
+  "10x3": { lam: 0.105, schnitt: 0.065 }
 };
 
-// ── DEINE PREISE ─────────────────────
-const DATA = { /* unverändert */ 
+const DATA = {
   A4: { qty:[1,2,5,10,20], mat:{ "Glänzend":[1.90,3.70,9.30,18.50,29.60], "Transparent":[2.00,4.00,10.00,20.00,32.00], "Holographic":[3.70,7.40,18.40,32.70,50.80], "Weiß Matt":[2.00,4.00,9.90,19.80,31.80] } },
   A5: { qty:[2,4,10,20,40], mat:{ "Glänzend":[2.10,4.20,10.50,16.80,30.40], "Transparent":[2.40,4.80,12.00,19.20,35.60], "Holographic":[4.20,8.40,19.80,30.40,54.40], "Weiß Matt":[2.30,4.50,11.20,18.00,32.70] } },
   A7: { qty:[8,16,40,80], mat:{ "Glänzend":[1.70,2.70,6.30,9.80], "Transparent":[2.90,4.70,10.70,15.80], "Holographic":[3.30,5.20,12.40,19.40], "Weiß Matt":[1.80,2.90,6.70,10.50] } },
@@ -240,15 +265,57 @@ function findOptimalCombination(format, mat, Q) {
   return { billQty: bestQty, baseCents: bestCost, breakdown: breakdownStr || "0" };
 }
 
+/* --- WEIßE VORLAGE BEFÜLLEN --- */
+function prepareWhiteOffer(combo, format, billQty, breakdown, basePrice, lamPrice, schnittPrice, total) {
+  const offer = document.getElementById('white-offer');
+  offer.style.display = 'block';
+  
+  document.getElementById('offer-date').textContent = new Date().toLocaleDateString('de-DE');
+  document.getElementById('offer-format').textContent = FORMAT_NAMES[format];
+  document.getElementById('offer-material').textContent = selectedMat;
+  document.getElementById('offer-wunsch').textContent = document.getElementById('qty').value;
+  document.getElementById('offer-bill').textContent = billQty;
+  document.getElementById('offer-breakdown').textContent = breakdown;
+  document.getElementById('offer-grund').textContent = fmt(basePrice);
+  document.getElementById('offer-lam').textContent = lamPrice ? fmt(lamPrice) : '—';
+  document.getElementById('offer-schnitt').textContent = schnittPrice ? fmt(schnittPrice) : '—';
+  document.getElementById('offer-total').textContent = fmt(total);
+}
+
+/* --- PNG & PDF EXPORT --- */
+async function downloadPNG() {
+  const offer = document.getElementById('white-offer');
+  const canvas = await html2canvas(offer, { scale: 2, backgroundColor: '#ffffff' });
+  const link = document.createElement('a');
+  link.download = `HooDPlaka67-Angebot_${new Date().toISOString().slice(0,10)}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+  offer.style.display = 'none';
+}
+
+async function downloadPDF() {
+  const offer = document.getElementById('white-offer');
+  const canvas = await html2canvas(offer, { scale: 2, backgroundColor: '#ffffff' });
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const imgData = canvas.toDataURL('image/png');
+  doc.addImage(imgData, 'PNG', 10, 10, 190, 0);
+  doc.save(`HooDPlaka67-Angebot_${new Date().toISOString().slice(0,10)}.pdf`);
+  offer.style.display = 'none';
+}
+
+/* --- BERECHNUNG --- */
 function calculate() {
   const format = document.getElementById('format').value;
   const Q = parseInt(document.getElementById('qty').value) || 0;
   const body = document.getElementById('result-body');
+  const exportDiv = document.getElementById('export-buttons');
 
   updatePackTable();
 
   if (Q < 1) {
     body.innerHTML = '<div class="empty-state">Wunschmenge eingeben → sofortiges Angebot</div>';
+    exportDiv.style.display = 'none';
     return;
   }
 
@@ -274,8 +341,11 @@ function calculate() {
   body.innerHTML = `
     <div class="price-main">${fmt(total/100)}</div>
     <div class="price-unit">∅ ${(total / billQty / 100).toFixed(4).replace('.', ',')} € pro Stück</div>
-    <div class="breakdown">${bd}</div>
-    <div class="interpolation-note">ℹ Add-ons format-spezifisch pro Stück berechnet</div>`;
+    <div class="breakdown">${bd}</div>`;
+
+  prepareWhiteOffer(combo, format, billQty, breakdown, baseCents/100, lamPrice, schnittPrice, total/100);
+
+  exportDiv.style.display = 'flex';
 }
 
 function toggleAddon(type) {
@@ -320,7 +390,6 @@ function updatePackTable() {
   const ps = d.mat[selectedMat];
   const perA4 = qs[0];
   const perA3 = STICKERS_PER_A3[format];
-
   let html = '';
   const packNames = ['S','M','L','XL'];
   const sheetLabels = ['1 Blatt','2 Blätter','5 Blätter','10 Blätter'];
