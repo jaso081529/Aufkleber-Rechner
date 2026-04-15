@@ -186,7 +186,18 @@
 </div>
 
 <script>
-// ── FORMAT-SPEZIFISCHE PREISE PRO STÜCK ─────────────────────
+// ── EK-KOSTEN (DEINE EINKAUFSPREISE PRO A3 BOGEN) ──────────
+const EK_A3 = {
+  "Glänzend": 0.24,
+  "Transparent": 0.30,
+  "Holographic": 0.55,
+  "Weiß Matt": 0.26
+};
+
+// Mindest-Aufschlag auf EK (Erhöht für Kleinstmengen, sinkt bei großen Mengen)
+const MIN_MARKUP = 2.1; 
+
+// ── FORMAT-SPEZIFISCHE PREISE PRO STÜCK (ADDS-ONS) ──────────
 const PER_STICKER = {
   "A4": { lam: 0.06, schnitt: 0.03 },
   "A5": { lam: 0.07, schnitt: 0.035 },
@@ -225,44 +236,54 @@ function getPackPrices(format, mat) {
 }
 
 function findOptimalCombination(format, mat, Q) {
-  const packs = DATA[format].qty;
-  const costs = getPackPrices(format, mat);
-  const maxPack = Math.max(...packs);
-  const LIMIT = Q + maxPack * 3;
-  const INF = 999999999;
-  const dp = new Array(LIMIT + 1).fill(INF);
-  const prev = new Array(LIMIT + 1).fill(null);
-  dp[0] = 0;
+  const qs = DATA[format].qty;
+  const ps = DATA[format].mat[mat].map(p => Math.round(p * 100)); // Cents
+  const n = qs.length;
+  const stickersPerA3 = STICKERS_PER_A3[format];
+  const costPerStickerCents = (EK_A3[mat] / stickersPerA3) * 100;
+  const absoluteMinPriceCents = Math.round(Q * costPerStickerCents * MIN_MARKUP);
 
-  for (let i = 0; i <= LIMIT; i++) {
-    if (dp[i] === INF) continue;
-    for (let j = 0; j < packs.length; j++) {
-      const next = i + packs[j];
-      if (next > LIMIT) continue;
-      const newCost = dp[i] + costs[j];
-      if (newCost < dp[next]) {
-        dp[next] = newCost;
-        prev[next] = { prev: i, packIndex: j };
+  let totalCents = 0;
+  let method = "";
+
+  // 1. Exakter Tabellenwert?
+  const idx = qs.indexOf(Q);
+  if (idx !== -1) {
+    totalCents = ps[idx];
+    method = "Tabellenpreis";
+  } 
+  // 2. Unterhalb kleinster Menge?
+  else if (Q < qs[0]) {
+    const unitPrice = ps[0] / qs[0];
+    totalCents = Math.round(Q * unitPrice);
+    method = "Linearer Kleinstmengen-Preis";
+  }
+  // 3. Zwischen zwei Tabellenwerten? (Interpolation)
+  else if (Q < qs[n-1]) {
+    for (let i = 0; i < n - 1; i++) {
+      if (Q > qs[i] && Q < qs[i + 1]) {
+        const t = (Q - qs[i]) / (qs[i + 1] - qs[i]);
+        totalCents = Math.round(ps[i] + t * (ps[i + 1] - ps[i]));
+        method = "Interpoliert";
+        break;
       }
     }
   }
-
-  let bestQty = Q, bestCost = INF;
-  for (let t = Q; t <= LIMIT; t++) {
-    if (dp[t] < bestCost) { bestCost = dp[t]; bestQty = t; }
+  // 4. Oberhalb größter Menge? (Degression)
+  else {
+    const baseUnitPrice = ps[n - 1] / qs[n - 1];
+    let discountedUnitPrice = baseUnitPrice * Math.pow(0.965, Math.floor(Q / qs[n-1]));
+    totalCents = Math.round(Q * discountedUnitPrice);
+    method = "Großmengen-Staffel";
   }
 
-  const breakdown = {};
-  let current = bestQty;
-  while (current > 0 && prev[current]) {
-    const pIdx = prev[current].packIndex;
-    const pSize = packs[pIdx];
-    breakdown[pSize] = (breakdown[pSize] || 0) + 1;
-    current = prev[current].prev;
+  // EK-Schutz Greift?
+  if (totalCents < absoluteMinPriceCents) {
+    totalCents = absoluteMinPriceCents;
+    method += " (EK-Schutz aktiv)";
   }
 
-  let breakdownStr = Object.keys(breakdown).sort((a,b)=>b-a).map(k => breakdown[k] + "×" + k).join(" + ");
-  return { billQty: bestQty, baseCents: bestCost, breakdown: breakdownStr || "0" };
+  return { billQty: Q, baseCents: totalCents, breakdown: method };
 }
 
 /* --- WEIßE VORLAGE BEFÜLLEN --- */
@@ -285,6 +306,7 @@ function prepareWhiteOffer(combo, format, billQty, breakdown, basePrice, lamPric
 /* --- PNG & PDF EXPORT --- */
 async function downloadPNG() {
   const offer = document.getElementById('white-offer');
+  offer.style.display = 'block'; // Sicherstellen, dass es sichtbar ist
   const canvas = await html2canvas(offer, { scale: 2, backgroundColor: '#ffffff' });
   const link = document.createElement('a');
   link.download = `HooDPlaka67-Angebot_${new Date().toISOString().slice(0,10)}.png`;
@@ -295,6 +317,7 @@ async function downloadPNG() {
 
 async function downloadPDF() {
   const offer = document.getElementById('white-offer');
+  offer.style.display = 'block'; // Sicherstellen, dass es sichtbar ist
   const canvas = await html2canvas(offer, { scale: 2, backgroundColor: '#ffffff' });
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
